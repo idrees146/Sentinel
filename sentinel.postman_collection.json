@@ -1,0 +1,221 @@
+{
+  "info": {
+    "name": "Sentinel API",
+    "description": "Medical Supply & Expiry Tracker — REST API test collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "sentinel-api-collection"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "catalogItemId", "value": "" },
+    { "key": "batchId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Auth — Register (Admin)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res && res.data && res.data.token) {",
+              "  pm.collectionVariables.set('token', res.data.token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ahmad Idrees\",\n  \"email\": \"ahmad@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"Admin\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+      }
+    },
+    {
+      "name": "Auth — Register (Nurse)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Nurse Fatima\",\n  \"email\": \"nurse@example.com\",\n  \"password\": \"secret123\",\n  \"role\": \"Nurse\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+      }
+    },
+    {
+      "name": "Auth — Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res && res.data && res.data.token) {",
+              "  pm.collectionVariables.set('token', res.data.token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ahmad@example.com\",\n  \"password\": \"secret123\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+      }
+    },
+    {
+      "name": "Catalog — Create Item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res && res.data && res.data._id) {",
+              "  pm.collectionVariables.set('catalogItemId', res.data._id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"itemName\": \"Amoxicillin 500mg\",\n  \"category\": \"Antibiotic\",\n  \"minimumThreshold\": 20\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/catalog", "host": ["{{baseUrl}}"], "path": ["api", "catalog"] }
+      }
+    },
+    {
+      "name": "Catalog — List (paginated + search)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/api/catalog?page=1&limit=10&search=amox",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "catalog"],
+          "query": [
+            { "key": "page", "value": "1" },
+            { "key": "limit", "value": "10" },
+            { "key": "search", "value": "amox" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Batch — Receive",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const res = pm.response.json();",
+              "if (res && res.data && res.data._id) {",
+              "  pm.collectionVariables.set('batchId', res.data._id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"catalogItemId\": \"{{catalogItemId}}\",\n  \"batchNumber\": \"AMX-2026-04-A\",\n  \"quantityReceived\": 100,\n  \"expiryDate\": \"2026-05-20\",\n  \"status\": \"Active\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/batches/receive", "host": ["{{baseUrl}}"], "path": ["api", "batches", "receive"] }
+      }
+    },
+    {
+      "name": "Batch — Consume (happy path)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": 30\n}" },
+        "url": {
+          "raw": "{{baseUrl}}/api/batches/{{batchId}}/consume",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "batches", "{{batchId}}", "consume"]
+        }
+      }
+    },
+    {
+      "name": "Batch — Consume (insufficient stock)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"amount\": 9999\n}" },
+        "url": {
+          "raw": "{{baseUrl}}/api/batches/{{batchId}}/consume",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "batches", "{{batchId}}", "consume"]
+        }
+      }
+    },
+    {
+      "name": "Alerts — Expiring in 30 days",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{baseUrl}}/api/alerts/expiring", "host": ["{{baseUrl}}"], "path": ["api", "alerts", "expiring"] }
+      }
+    },
+    {
+      "name": "Auth — Missing token (401)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/catalog", "host": ["{{baseUrl}}"], "path": ["api", "catalog"] }
+      }
+    },
+    {
+      "name": "Validation — Bad register body (400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] }
+      }
+    }
+  ]
+}
